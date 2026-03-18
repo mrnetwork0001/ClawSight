@@ -125,6 +125,41 @@ const LandingPage = ({ onLaunch }) => {
   )
 }
 
+const NotificationToast = ({ message, type = 'error', onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 50, scale: 0.9 }}
+      className={cn(
+        "fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] px-6 py-4 rounded-2xl glass-card border flex items-center gap-4 shadow-2xl min-w-[320px] backdrop-blur-3xl",
+        type === 'error' ? "border-binance-red/30 bg-binance-red/10" : "border-binance-primary/30 bg-binance-primary/10"
+      )}
+    >
+      <div className={cn(
+        "w-10 h-10 rounded-xl flex items-center justify-center",
+        type === 'error' ? "bg-binance-red/20" : "bg-binance-primary/20"
+      )}>
+        {type === 'error' ? <AlertTriangle className="w-6 h-6 text-binance-red" /> : <ShieldAlert className="w-6 h-6 text-binance-primary" />}
+      </div>
+      <div className="flex-1">
+        <p className="text-xs font-bold text-white uppercase tracking-wider mb-0.5">
+          {type === 'error' ? 'System Alert' : 'Notification'}
+        </p>
+        <p className="text-sm text-binance-secondary font-medium leading-tight">{message}</p>
+      </div>
+      <button onClick={onClose} className="p-1 hover:bg-white/5 rounded-lg transition-colors">
+        <X className="w-4 h-4 text-binance-secondary" />
+      </button>
+    </motion.div>
+  );
+};
+
 const FlippableMetricCard = ({ title, value, subtext, icon: Icon, explanation, iconColor }) => {
   const [isFlipped, setIsFlipped] = useState(false);
 
@@ -492,6 +527,9 @@ function App() {
   const [tradeData, setTradeData] = useState({ pair: '', entry: '', timestamp: '' })
   const [result, setResult] = useState(null)
   
+  // --- Toast State ---
+  const [toast, setToast] = useState(null)
+  
   // --- Autocomplete State ---
   const [allSymbols, setAllSymbols] = useState([])
   const [suggestions, setSuggestions] = useState([])
@@ -533,7 +571,7 @@ function App() {
   const handleExplain = async (e) => {
     e.preventDefault()
     if (!tradeData.pair || !tradeData.entry || !tradeData.timestamp) {
-      alert("Please check all fields.")
+      setToast({ message: "Claw Requirement: All fields must be populated to analyze market context." })
       return
     }
     
@@ -548,7 +586,7 @@ function App() {
       if (data.error) throw new Error(data.error)
       setResult(data)
     } catch (err) {
-      alert(err.message)
+      setToast({ message: err.message })
     } finally {
       setLoading(false)
     }
@@ -678,6 +716,17 @@ function App() {
 
       <div className="fixed -bottom-20 -left-20 w-80 h-80 bg-binance-primary/10 rounded-full blur-[100px] pointer-events-none -z-10" />
       <div className="fixed -top-20 -right-20 w-80 h-80 bg-binance-green/5 rounded-full blur-[100px] pointer-events-none -z-10" />
+
+      {/* Global Notifications */}
+      <AnimatePresence>
+        {toast && (
+          <NotificationToast 
+            message={toast.message} 
+            type={toast.type || 'error'} 
+            onClose={() => setToast(null)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
