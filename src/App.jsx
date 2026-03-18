@@ -405,55 +405,132 @@ const MarketPulse = () => {
   )
 }
 
-const RiskDesk = () => (
-  <div className="space-y-6 pt-6">
-    <div className="flex items-center justify-between">
-      <h2 className="text-xl font-bold flex items-center gap-2">
-        <Shield className="w-6 h-6 text-binance-primary" /> Global Risk Monitor
-      </h2>
-      <div className="flex gap-2">
-        <div className="px-3 py-1 bg-binance-red/10 border border-binance-red/30 rounded text-[10px] font-bold text-binance-red uppercase">Extreme Volatility</div>
-        <div className="px-3 py-1 bg-binance-green/10 border border-binance-green/30 rounded text-[10px] font-bold text-binance-green uppercase">Bullish Flow</div>
+const RiskDesk = () => {
+  const [alerts, setAlerts] = useState([]);
+  const [latency, setLatency] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGlobalRisk = async () => {
+      const start = performance.now();
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT"]');
+        const data = await res.json();
+        const end = performance.now();
+        setLatency(Math.round(end - start));
+
+        const newAlerts = data.map(ticker => {
+          const change = parseFloat(ticker.priceChangePercent);
+          if (change <= -5) {
+            return {
+              icon: AlertTriangle,
+              title: `${ticker.symbol} Liquidity Sweep`,
+              desc: `Aggressive selling detected. ${ticker.symbol} dropped ${change}% in 24h. Potential floor hunt in progress.`,
+              color: 'text-binance-red',
+              type: 'critical'
+            };
+          }
+          if (Math.abs(change) >= 8) {
+             return {
+              icon: Zap,
+              title: `${ticker.symbol} Volatility Spike`,
+              desc: `Extreme movement of ${change}% detected. Market makers are widening the spread. Tread carefully.`,
+              color: 'text-binance-yellow',
+              type: 'warning'
+            };
+          }
+          return null;
+        }).filter(Boolean);
+
+        // Fallback if market is boring
+        if (newAlerts.length === 0) {
+          newAlerts.push({
+            icon: ShieldAlert,
+            title: 'Low Global Risk',
+            desc: 'Top pairs are exhibiting stable volatility. No aggressive liquidity sweeps detected in the last cycle.',
+            color: 'text-binance-green',
+            type: 'safe'
+          });
+        }
+
+        setAlerts(newAlerts);
+      } catch (err) {
+        console.error("Risk Monitor Failure:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGlobalRisk();
+    const interval = setInterval(fetchGlobalRisk, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="space-y-6 pt-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          <Shield className="w-6 h-6 text-binance-primary" /> Global Risk Monitor
+        </h2>
+        <div className="flex gap-2">
+          <div className="px-3 py-1 bg-binance-red/10 border border-binance-red/30 rounded text-[10px] font-bold text-binance-red uppercase">Live Scanner</div>
+          <div className="px-3 py-1 bg-binance-green/10 border border-binance-green/30 rounded text-[10px] font-bold text-binance-green uppercase">Market Radar</div>
+        </div>
       </div>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="md:col-span-2 space-y-4">
-        {[
-          { icon: AlertTriangle, title: 'BTC Liquidity Sweep', desc: 'Large sell-wall identified at $68,500. Expected correction in next 15m.', color: 'text-binance-yellow' },
-          { icon: Zap, title: 'OpenClaw Sentiment Shift', desc: 'Social sentiment on Binance Square just flipped 70% Bullish for $SOL.', color: 'text-binance-green' },
-          { icon: ShieldAlert, title: 'Network Congestion', desc: 'High gas detected on Ethereum mainnet. Consider L2 alternatives for spot.', color: 'text-binance-red' },
-        ].map((alert, i) => (
-          <div key={i} className="glass-card p-5 border-white/5 flex gap-4 items-start">
-            <div className="p-2 rounded bg-white/5">
-              <alert.icon className={cn("w-5 h-5", alert.color)} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-4">
+          {loading ? (
+            <div className="glass-card p-12 flex flex-col items-center justify-center gap-4">
+               <div className="w-8 h-8 border-2 border-binance-primary/30 border-t-binance-primary rounded-full animate-spin" />
+               <p className="text-xs font-mono text-binance-primary uppercase">Scanning Liquidity Pools...</p>
             </div>
-            <div>
-              <p className="font-bold text-sm mb-1">{alert.title}</p>
-              <p className="text-xs text-binance-secondary leading-relaxed">{alert.desc}</p>
+          ) : (
+            alerts.map((alert, i) => (
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="glass-card p-5 border-white/5 flex gap-4 items-start"
+              >
+                <div className="p-2 rounded bg-white/5">
+                  <alert.icon className={cn("w-5 h-5", alert.color)} />
+                </div>
+                <div>
+                  <p className="font-bold text-sm mb-1">{alert.title}</p>
+                  <p className="text-xs text-binance-secondary leading-relaxed">{alert.desc}</p>
+                </div>
+              </motion.div>
+            ))
+          )}
+        </div>
+        <div className="glass-card p-6 bg-binance-primary/5 border-binance-primary/20">
+          <h4 className="text-xs font-bold uppercase mb-4 tracking-widest text-binance-primary">System Health</h4>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-binance-secondary">API Latency</span>
+              <span className={cn("font-mono font-bold", latency < 200 ? "text-binance-green" : "text-binance-yellow")}>
+                {latency > 0 ? `${latency}ms` : 'Calculating...'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-binance-secondary">Market Sentiment</span>
+              <span className="text-binance-green font-mono uppercase">Bullish Flow</span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-binance-secondary">Scanner State</span>
+              <span className="text-binance-primary font-bold uppercase">Optimal</span>
             </div>
           </div>
-        ))}
-      </div>
-      <div className="glass-card p-6 bg-binance-primary/5 border-binance-primary/20">
-        <h4 className="text-xs font-bold uppercase mb-4 tracking-widest text-binance-primary">System Health</h4>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-binance-secondary">API Latency</span>
-            <span className="text-binance-green font-mono">14ms</span>
-          </div>
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-binance-secondary">OpenClaw Engine</span>
-            <span className="text-binance-green font-mono uppercase">Optimal</span>
-          </div>
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-binance-secondary">Account Tier</span>
-            <span className="text-binance-primary font-bold">VIP 9</span>
+          <div className="mt-8 pt-6 border-t border-white/5">
+            <p className="text-[10px] text-binance-secondary leading-relaxed italic">
+              *Real-time intelligence fetched directly from Binance Global Liquidity nodes. Data refreshes every 30s.
+            </p>
           </div>
         </div>
       </div>
     </div>
-  </div>
-)
+  )
+}
 
 const InsightCard = ({ result }) => {
   if (!result || !result.metrics) return null;
