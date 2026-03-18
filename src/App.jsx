@@ -791,8 +791,11 @@ function App() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-binance-secondary uppercase">Trade Date/Time (Optional)</label>
+                      <label className="text-xs font-bold text-binance-secondary uppercase">Entry Date/Time (Optional)</label>
                       <input className="binance-input w-full" placeholder="Defaults to NOW" value={tradeData.timestamp} onChange={e => setTradeData({...tradeData, timestamp: e.target.value})} />
+                      <p className="text-[9px] text-binance-secondary/60 leading-tight italic">
+                        *The exact moment to scan for liquidity and market mood.
+                      </p>
                     </div>
                     <button disabled={loading} className="binance-btn-primary w-full flex items-center justify-center gap-2 group disabled:opacity-50">
                       {loading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : "Initiate Audit"}

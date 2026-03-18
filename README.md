@@ -27,7 +27,7 @@ If you bought the absolute ceiling, our AI gracefully calls you a **"FOMO Casual
 ## ⚙️ How to Audit Your History
 1. **Initiate Audit**: Input your Trading Pair (e.g., BTCUSDT).
 2. **Context Input**: Provide your Entry Price and Exit Price.
-3. **Optional History**: Provide a timestamp (YYYY-MM-DD HH:MM) to audit an old trade, or leave it blank to audit a live session.
+3. **Optional History**: Provide your **Entry Date/Time** (YYYY-MM-DD HH:MM) to audit an old trade, or leave it blank to audit a live session.
 4. **The Verdict**: Receive your performance grade and improvements directly from the OpenClaw AI engine.
 
 ---
