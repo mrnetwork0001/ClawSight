@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-binance-bg: #1E2329;
+  --color-binance-black: #0B0E11;
+  --color-binance-primary: #FCD535;
+  --color-binance-text: #EAECEF;
+  --color-binance-secondary: #707A8A;
+  --color-binance-green: #2EBD85;
+  --color-binance-red: #F6465D;
+  --color-binance-hover: #2B3139;
+  
+  --background-image-glass-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+:root {
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+@layer base {
+  body {
+    @apply bg-binance-black text-binance-text font-sans antialiased;
+    background-image: 
+      radial-gradient(at 0% 0%, rgba(252, 213, 53, 0.03) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(46, 189, 133, 0.03) 0px, transparent 50%);
+  }
+}
+
+@utility glass-card {
+  @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-xl;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+@utility glass-card-hover {
+  @apply transition-all duration-300 hover:bg-white/10 hover:border-white/20;
+}
+
+@utility binance-input {
+  @apply bg-binance-bg border border-white/5 rounded-lg px-4 py-2 outline-none focus:border-binance-primary/40 transition-colors placeholder:text-binance-secondary/50;
+}
+
+@utility binance-btn-primary {
+  @apply bg-binance-primary text-black font-semibold px-6 py-2.5 rounded-lg hover:brightness-110 active:scale-[0.98] transition-all;
+}
+
+@utility binance-btn-outline {
+  @apply border border-binance-primary/40 text-binance-primary font-semibold px-6 py-2.5 rounded-lg hover:bg-binance-primary/10 active:scale-[0.98] transition-all;
+}
+
+@utility pro-gradient-header {
+  background: linear-gradient(90deg, #FCD535 0%, #FFB119 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-binance-black;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
+}
