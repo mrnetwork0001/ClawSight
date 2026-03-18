@@ -88,41 +88,30 @@ export default async function handler(req, res) {
     
     // AI AUDIT LOGIC
     let verdict, explanation, improvement;
-    const exitVal = parseFloat(exit);
-    const entryVal = parseFloat(entry);
-    
-    // Truth Filter: Verify if prices actually existed in those windows
-    const entryDeviation = Math.abs((entryVal - (maxHigh + minLow) / 2) / ((maxHigh + minLow) / 2)) * 100;
-    const exitDeviation = Math.abs((exitVal - exitMaxHigh) / exitMaxHigh) * 100;
-    
-    const isImpossibleEntry = entryVal > maxHigh * 1.02 || entryVal < minLow * 0.98;
-    const isImpossibleExit = exitVal > exitMaxHigh * 1.02;
+    // 🛡️ Truth Filter (Relaxed): Check if price is within a 15% tolerance of market reality
+    const isGhostTrade = entryVal > maxHigh * 1.5 || entryVal < minLow * 0.5; // Way off (50%+)
+    const isEstimated = entryVal > maxHigh * 1.05 || entryVal < minLow * 0.95; // Slightly off (5%+)
 
-    if (isImpossibleEntry) {
-      verdict = 'Impossible Entry';
-      explanation = `Your entry price ($${entryVal}) never existed in the 20m window around your timestamp ($${minLow} - $${maxHigh}). You are auditing a Ghost Trade.`;
-      improvement = "Ensure your entry price matches the actual exchange tape for that minute.";
+    if (isGhostTrade) {
+      verdict = 'Ghost Trade Detected';
+      explanation = `The price $${entryVal} never existed in this window. Market was between $${minLow} and $${maxHigh}. ClawSight can't audit imaginary liquidity.`;
+      improvement = "Try a more realistic price or use the 'Current Price' for a live audit.";
     } else if (pnl > 0) {
+      const estimateNote = isEstimated ? " [Estimated Analysis] " : "";
       if (isTopExit) {
         verdict = 'Absolute Sniper';
-        explanation = `Mathematically flawless. You caught the bottom near $${minLow} and extracted ${pnl}% profit, selling at the absolute exit peak of $${exitVal}.`;
-        improvement = "None. Consider scaling this logic across more pairs.";
+        explanation = `${estimateNote}Mathematically impressive. Even with estimated prices, you caught the local peak at $${exitVal}. Real-time peak was $${exitMaxHigh}.`;
+        improvement = "None. High-five your monitor.";
       } else {
         verdict = 'Safe Profit';
-        explanation = `You made ${pnl}% profit. Good discipline. However, you left money on the table; the market peak during your exit window was $${exitMaxHigh}.`;
-        improvement = "Use trailing stops to ride the trend longer.";
+        explanation = `${estimateNote}You made ${pnl}% profit. Good discipline. The market peaked at $${exitMaxHigh} during your exit, so more gains were possible.`;
+        improvement = "Try using trailing stops for the next runner.";
       }
     } else {
+      const estimateNote = isEstimated ? " [Estimated Analysis] " : "";
       verdict = 'Liquidity Donor';
-      explanation = `Exited at ${pnl}% loss. RSI at entry was ${rsi}. You likely panic-sold or provided the exit liquidity for a whale.`;
+      explanation = `${estimateNote}Exited at ${pnl}% loss. RSI at entry was ${rsi}. You likely panic-sold right before a potential bounce.`;
       improvement = "Wait for RSI stabilization below 40 before entering into a downtrend.";
-    }
-
-    // Special Roast for buying the very top (if it was a real price)
-    if (!isImpossibleEntry && entryVal >= maxHigh * 0.999) {
-      verdict = 'FOMO Casualty';
-      explanation = `You bought the absolute local ceiling of $${maxHigh}. The whales were waiting for exactly this type of retail liquidity.`;
-      improvement = "Never buy the first green candle after a parabolic move.";
     }
 
     return res.status(200).json({
