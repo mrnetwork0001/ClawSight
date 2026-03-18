@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { 
   Search, Zap, TrendingUp, BarChart2, ShieldAlert, CheckCircle2, 
-  AlertTriangle, ArrowRight, Menu, Bell, User, Clock, Terminal, 
+  AlertTriangle, ArrowRight, Menu, Clock, Terminal, 
   Activity, Wind, DollarSign, Globe, Shield 
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -39,12 +39,6 @@ const Navbar = ({ activeTab, setActiveTab }) => (
       </div>
     </div>
     <div className="flex items-center gap-4 text-binance-secondary">
-      <div className="relative group">
-        <Bell className="w-5 h-5 cursor-pointer hover:text-binance-text transition-colors" />
-        <div className="absolute top-0 right-0 w-2 h-2 bg-binance-red rounded-full border border-binance-black" />
-      </div>
-      <User className="w-5 h-5 cursor-pointer hover:text-binance-text transition-colors" />
-      <div className="h-6 w-px bg-white/10" />
       <button className="text-[10px] font-bold text-binance-primary px-2 py-0.5 border border-binance-primary/30 rounded bg-binance-primary/5">
         BINANCE PRO
       </button>
