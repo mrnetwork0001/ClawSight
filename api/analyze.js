@@ -103,8 +103,8 @@ export default async function handler(req, res) {
     const isTopExit = exitVal >= exitMaxHigh * 0.998;
     
     let verdict, explanation, improvement;
-    const isGhostTrade = entryVal > maxHigh * 1.5 || entryVal < minLow * 0.5;
-    const isEstimated = entryVal > maxHigh * 1.05 || entryVal < minLow * 0.95;
+    const isGhostTrade = entryVal > maxHigh * 3.0 || entryVal < minLow * 0.1; // 200%+ Off Tape
+    const isEstimated = entryVal > maxHigh * 1.5 || entryVal < minLow * 0.5;   // 50% Off Tape
 
     if (isGhostTrade) {
       verdict = 'Ghost Trade Detected';
