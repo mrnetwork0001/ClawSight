@@ -75,9 +75,6 @@ const LandingPage = ({ onLaunch }) => {
             Launch Terminal
             <ArrowRight className="w-6 h-6 transition-transform group-hover:translate-x-2" />
           </button>
-          <a href="#features" className="px-12 py-5 text-xl font-bold border border-white/10 rounded-2xl bg-white/[0.02] hover:bg-white/5 transition-all backdrop-blur-md">
-            View Analytics
-          </a>
         </motion.div>
 
         {/* Feature Grid */}
