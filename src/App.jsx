@@ -95,7 +95,7 @@ const LandingPage = ({ onLaunch }) => {
             { 
               icon: ShieldAlert, 
               title: "Contextual Roast", 
-              desc: "Our AI doesn't just show data—it judges your logic against RSI and Volatility.",
+              desc: "Our AI doesn't just show data; it judges your logic against RSI and Volatility.",
               color: "text-binance-red"
             }
           ].map((feature, i) => (
