@@ -1,3 +1,4 @@
+/* global process */
 import axios from 'axios';
 
 // Helper: Calculate RSI
@@ -40,36 +41,43 @@ export default async function handler(req, res) {
     const tradeTs = new Date(timestamp).getTime();
     const exitTs = exitTimestamp ? new Date(exitTimestamp).getTime() : Date.now();
     
-    if (isNaN(tradeTs)) return res.status(200).json({ error: "Claw Error: Invalid Entry Timestamp." });
+    if (isNaN(tradeTs)) return res.status(200).json({ error: "Claw Error: Invalid Entry Date." });
 
     const start = tradeTs - 600000;
     const end = tradeTs + 600000;
-    const binanceUrl = `https://data-api.binance.vision/api/v3/klines?symbol=${pair.toUpperCase()}&interval=1m&startTime=${start}&endTime=${end}&limit=20`;
+    const cleanPair = (pair || "").toUpperCase().trim();
+    const binanceUrl = `https://data-api.binance.vision/api/v3/klines?symbol=${cleanPair}&interval=1m&startTime=${start}&endTime=${end}&limit=20`;
     
-    // Parallel Fetching to save time (Strict 4.5s timeout for Vercel Hobby tier)
     const fetchPromises = [
-      axios.get(binanceUrl, { headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {}, timeout: 4500 })
+      axios.get(binanceUrl, { headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {}, timeout: 5000 })
     ];
 
     const needsSecondFetch = Math.abs(exitTs - tradeTs) > 600000;
     if (needsSecondFetch) {
       const exitStart = exitTs - 600000;
       const exitEnd = exitTs + 600000;
-      const exitUrl = `https://data-api.binance.vision/api/v3/klines?symbol=${pair.toUpperCase()}&interval=1m&startTime=${exitStart}&endTime=${exitEnd}&limit=20`;
-      fetchPromises.push(axios.get(exitUrl, { headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {}, timeout: 4500 }));
+      const exitUrl = `https://data-api.binance.vision/api/v3/klines?symbol=${cleanPair}&interval=1m&startTime=${exitStart}&endTime=${exitEnd}&limit=20`;
+      fetchPromises.push(axios.get(exitUrl, { headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {}, timeout: 5000 }));
     }
 
-    const responses = await Promise.all(fetchPromises.map(p => p.catch(e => e)));
+    const responses = await Promise.all(fetchPromises.map(p => p.catch(e => ({ isClawError: true, err: e }))));
     
     const entryRes = responses[0];
-    if (entryRes.isAxiosError) {
-      const msg = entryRes.response?.data?.msg || "Market Scout failed. Ensure pair is valid.";
-      if (msg.includes("Invalid symbol")) return res.status(200).json({ error: `The Claw can't find '${pair}'. Check symbol (e.g. BTCUSDT).` });
-      return res.status(200).json({ error: "Binance Connection Timeout. High market traffic. Try in 5s." });
+    if (entryRes.isClawError) {
+      const axiosErr = entryRes.err;
+      const status = axiosErr.response?.status;
+      const msg = axiosErr.response?.data?.msg || "";
+      
+      if (status === 400 || msg.toLowerCase().includes("invalid symbol")) {
+        return res.status(200).json({ error: `The Claw can't find '${cleanPair}'. Check symbol (e.g. BTCUSDT) or listing status.` });
+      }
+      return res.status(200).json({ error: "Market Scout failed. Binance connection timeout or rate limit." });
     }
     
     const klines = entryRes.data;
-    if (!klines || klines.length === 0) return res.status(200).json({ error: `Market Ghost Town: No data for ${pair} at this time.` });
+    if (!klines || klines.length === 0) {
+      return res.status(200).json({ error: `Market Ghost Town: '${cleanPair}' is valid, but no price action found for this timestamp.` });
+    }
 
     const closes = klines.map(k => parseFloat(k[4]));
     const highs = klines.map(k => parseFloat(k[2]));
