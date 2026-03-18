@@ -11,14 +11,26 @@ export default async function handler(req, res) {
 
   try {
     const tradeTs = new Date(timestamp).getTime();
+    if (isNaN(tradeTs)) {
+      return res.status(400).json({ error: `Invalid Timestamp format: "${timestamp}". Use YYYY-MM-DD HH:MM` });
+    }
+
     const start = tradeTs - 600000;
     const end = tradeTs + 600000;
 
-    // 1. Fetch Binance Data (Using your key if provided)
+    // 1. Fetch Binance Data
     const binanceUrl = `https://api.binance.com/api/v3/klines?symbol=${pair}&interval=1m&startTime=${start}&endTime=${end}&limit=20`;
-    const binanceResponse = await axios.get(binanceUrl, {
-      headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {}
-    });
+    
+    let binanceResponse;
+    try {
+      binanceResponse = await axios.get(binanceUrl, {
+        headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {},
+        timeout: 5000
+      });
+    } catch (binanceErr) {
+      const msg = binanceErr.response?.data?.msg || binanceErr.message;
+      return res.status(502).json({ error: `Binance API Error: ${msg}. Check your Trading Pair and Keys.` });
+    }
     
     const klines = binanceResponse.data;
     const processedKlines = klines.map(k => ({ time: k[0], close: parseFloat(k[4]) }));
