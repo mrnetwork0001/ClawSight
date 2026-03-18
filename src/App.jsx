@@ -123,12 +123,18 @@ const LandingPage = ({ onLaunch }) => {
       </div>
 
       {/* Footer Branding */}
-      <div className="mt-24 pb-8 z-10 flex items-center gap-2 opacity-30 grayscale hover:grayscale-0 transition-all">
-        <span className="text-sm font-mono tracking-widest uppercase">Verified OpenClaw Partner</span>
-      </div>
+      <Footer />
     </div>
   )
 }
+
+const Footer = () => (
+  <div className="py-8 z-10 flex items-center justify-center gap-2 opacity-50 hover:opacity-100 transition-all">
+    <span className="text-sm font-mono tracking-widest uppercase">
+      Built by <a href="https://x.com/encrypt_wizard" target="_blank" rel="noopener noreferrer" className="text-binance-primary hover:underline font-bold">MrNetwork</a>
+    </span>
+  </div>
+)
 
 const Navbar = ({ activeTab, setActiveTab, onGoLanding }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -635,6 +641,8 @@ function App() {
           {activeTab === 'risk' && <RiskDesk />}
         </AnimatePresence>
       </main>
+
+      <Footer />
 
       <div className="fixed -bottom-20 -left-20 w-80 h-80 bg-binance-primary/10 rounded-full blur-[100px] pointer-events-none -z-10" />
       <div className="fixed -top-20 -right-20 w-80 h-80 bg-binance-green/5 rounded-full blur-[100px] pointer-events-none -z-10" />
