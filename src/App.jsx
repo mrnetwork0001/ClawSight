@@ -50,15 +50,15 @@ const LandingPage = ({ onLaunch }) => {
             <img src="/logo.png" alt="ClawSight Logo" className="w-full h-full object-contain" />
           </div>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-            <Globe className="w-4 h-4 text-binance-primary animate-pulse" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-binance-secondary">Intelligence Layer for Binance Traders</span>
+            <ShieldAlert className="w-4 h-4 text-binance-primary animate-pulse" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-binance-secondary">Stop Guessing. Audit Your Performance.</span>
           </div>
           <h1 className="text-6xl md:text-8xl font-bold tracking-tight leading-[0.9]">
-            See the <span className="pro-gradient-header">Signal</span><br/>
-            Amidst the <span className="text-white/40 italic font-mono">Noise.</span>
+            Audit Your <span className="pro-gradient-header">PnL</span><br/>
+            Roast Your <span className="text-white/40 italic font-mono">Bias.</span>
           </h1>
           <p className="text-xl md:text-2xl text-binance-secondary max-w-2xl leading-relaxed">
-            Stop guessing your entry logic. ClawSight uses agentic AI to dissect your trades against real-time Binance liquidity.
+            Did you buy the bottom or just supply the exit liquidity? ClawSight uses agentic AI to audit your trades against mathematical market reality.
           </p>
         </motion.div>
 
@@ -82,20 +82,20 @@ const LandingPage = ({ onLaunch }) => {
           {[
             { 
               icon: Zap, 
-              title: "Trade Explainer", 
-              desc: "AI-driven analysis of your entries based on history and market mood.",
+              title: "AI Performance Audit", 
+              desc: "Immediate feedback on your entry/exit vs the local 20m high and low targets.",
               color: "text-binance-primary"
             },
             { 
-              icon: Activity, 
-              title: "Momentum Grid", 
-              desc: "Real-time performance heatmaps of the top 12 Binance assets.",
+              icon: Search, 
+              title: "Top/Bottom Detector", 
+              desc: "Mathematically prove if you caught the peak or provided the floor liquidity.",
               color: "text-binance-green"
             },
             { 
-              icon: Shield, 
-              title: "Risk Desk", 
-              desc: "Institutional-grade monitoring for liquidity sweeps and congestion.",
+              icon: ShieldAlert, 
+              title: "Contextual Roast", 
+              desc: "Our AI doesn't just show data—it judges your logic against RSI and Volatility.",
               color: "text-binance-red"
             }
           ].map((feature, i) => (
