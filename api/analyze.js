@@ -18,8 +18,8 @@ export default async function handler(req, res) {
     const start = tradeTs - 600000;
     const end = tradeTs + 600000;
 
-    // 1. Fetch Binance Data
-    const binanceUrl = `https://api.binance.com/api/v3/klines?symbol=${pair}&interval=1m&startTime=${start}&endTime=${end}&limit=20`;
+    // 1. Fetch Binance Data (using the more resilient vision endpoint)
+    const binanceUrl = `https://data-api.binance.vision/api/v3/klines?symbol=${pair}&interval=1m&startTime=${start}&endTime=${end}&limit=20`;
     
     let binanceResponse;
     try {
