@@ -595,23 +595,30 @@ function App() {
     setShowSuggestions(false)
   }
 
-  const handleExplain = async (e) => {
-    e.preventDefault()
-    if (!tradeData.pair || !tradeData.entry || !tradeData.exit || !tradeData.timestamp) {
-      setToast({ message: "Claw Requirement: All fields (including Exit Price) must be populated." })
+    if (!tradeData.pair || !tradeData.entry || !tradeData.exit) {
+      setToast({ message: "Claw Requirement: Pair, Entry, and Exit prices are mandatory." })
       return
     }
     
     setLoading(true)
     try {
-      const response = await fetch('/api/analyze', {
+      // Use current time if timestamp is empty
+      const finalTimestamp = tradeData.timestamp.trim() || new Date().toISOString()
+      
+      const response = await fetch(`/api/analyze?cb=${Date.now()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(tradeData)
+        body: JSON.stringify({ ...tradeData, timestamp: finalTimestamp })
       })
-      const data = await response.json()
-      if (data.error) throw new Error(data.error)
-      setResult(data)
+      
+      const text = await response.text()
+      try {
+        const data = JSON.parse(text)
+        if (data.error) throw new Error(data.error)
+        setResult(data)
+      } catch (e) {
+        throw new Error("The API returned an invalid response. Binance might be rate-limiting. Try once more in 10s.")
+      }
     } catch (err) {
       setToast({ message: err.message })
     } finally {
@@ -704,8 +711,8 @@ function App() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-binance-secondary uppercase">Trade Date/Time</label>
-                      <input className="binance-input w-full" placeholder="e.g. 2024-03-15 12:00" value={tradeData.timestamp} onChange={e => setTradeData({...tradeData, timestamp: e.target.value})} />
+                      <label className="text-xs font-bold text-binance-secondary uppercase">Trade Date/Time (Optional)</label>
+                      <input className="binance-input w-full" placeholder="Defaults to NOW" value={tradeData.timestamp} onChange={e => setTradeData({...tradeData, timestamp: e.target.value})} />
                     </div>
                     <button disabled={loading} className="binance-btn-primary w-full flex items-center justify-center gap-2 group disabled:opacity-50">
                       {loading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : "Initiate Audit"}
