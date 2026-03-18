@@ -1,13 +1,46 @@
 import axios from 'axios';
 
+// Helper: Calculate RSI (Relative Strength Index)
+function calculateRSI(prices) {
+  if (prices.length < 14) return 50; // Not enough data for accurate RSI
+  
+  let gains = 0;
+  let losses = 0;
+
+  for (let i = 1; i < prices.length; i++) {
+    const diff = prices[i] - prices[i - 1];
+    if (diff >= 0) gains += diff;
+    else losses -= diff;
+  }
+
+  const avgGain = gains / (prices.length - 1);
+  const avgLoss = losses / (prices.length - 1);
+  
+  if (avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
+  return Math.round(100 - (100 / (1 + rs)));
+}
+
+// Helper: Calculate Volatility (Standard Deviation of % returns)
+function calculateVolatility(prices) {
+  const returns = [];
+  for (let i = 1; i < prices.length; i++) {
+    returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
+  }
+  
+  const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+  const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / returns.length;
+  const stdDev = Math.sqrt(variance);
+  
+  // Annualized volatility (approx for 1m klines across 20m)
+  return (stdDev * 100).toFixed(2); 
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { pair, entry, timestamp } = req.body;
-  
-  // These will be pulled from your Vercel Environment Variables
   const BINANCE_KEY = process.env.BINANCE_API_KEY;
-  const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN;
 
   try {
     const tradeTs = new Date(timestamp).getTime();
@@ -33,31 +66,43 @@ export default async function handler(req, res) {
     }
     
     const klines = binanceResponse.data;
-    const processedKlines = klines.map(k => ({ time: k[0], close: parseFloat(k[4]) }));
-    const lastPrice = processedKlines[processedKlines.length - 1].close;
+    const closes = klines.map(k => parseFloat(k[4]));
+    const lastPrice = closes[closes.length - 1];
 
-    // 2. AI Brain: Senior Risk Manager
-    // If you have a Gateway Token, we could call your OpenClaw Agent here.
-    // For now, we use our highly-refined, witty logic built for the demo:
+    // 2. REAL MATH: RSI & Volatility
+    const rsi = calculateRSI(closes);
+    const volatility = calculateVolatility(closes);
+
+    // 3. AI Brain: Senior Risk Manager (Witty & Professional)
+    let verdict, explanation, improvement;
     
-    let result;
-    if (lastPrice < entry) {
-      result = {
-        verdict: 'Falling Knife (Handleless)',
-        explanation: ` momentum was fading while volatility was screaming "exit". You entered ${pair} at ${entry} right into a liquidity sweep.`,
-        improvement: "Wait for a high-volume bullish divergence before trying to catch a bottom.",
-        metrics: { rsi: 78, volatility: 5.4, lastPrice }
-      };
+    if (rsi > 70) {
+      verdict = 'Greedy Peak Picker';
+      explanation = `The RSI was screaming ${rsi} (Overbought). You entered ${pair} right as the whales were preparing to dump.`;
+      improvement = "Wait for an RSI reset below 40 before FOMOing into top-tier liquidity sweeps.";
+    } else if (rsi < 30) {
+      verdict = 'Smart Accumulation';
+      explanation = `Incredible timing. RSI was bottomed out at ${rsi}. You effectively "bought the fear" when everyone else was selling.`;
+      improvement = "Maintain your target. This is a high-probability reversal zone.";
     } else {
-      result = {
-        verdict: 'Swimming with Whales',
-        explanation: `Calculated and calm. You entered during a period of stability when the noise was low. This is how the 1% trades.`,
-        improvement: "Maintain your trailing stop loss and let the trend work for you.",
-        metrics: { rsi: 34, volatility: 2.1, lastPrice }
-      };
+      verdict = 'Safe & Calculated';
+      explanation = `Balanced entry. RSI is neutral at ${rsi} and volatility is stable at ${volatility}%. You aren't chasing ghosts.`;
+      improvement = "Watch the 15m volume profile to ensure the trend has legs.";
     }
 
-    return res.status(200).json(result);
+    // Special case for massive profit
+    if (lastPrice > entry * 1.05) {
+      verdict = 'Swimming with Whales';
+      explanation = `You are currently up over 5% in just minutes. This entry at ${entry} was mathematically flawless.`;
+    }
+
+    return res.status(200).json({
+      verdict,
+      explanation,
+      improvement,
+      metrics: { rsi, volatility, lastPrice }
+    });
+
   } catch (error) {
     console.error('ClawSight Backend Error:', error.message);
     return res.status(500).json({ error: 'The Claw failed to reach Binance. Check your API Keys.' });
