@@ -336,6 +336,44 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [tradeData, setTradeData] = useState({ pair: '', entry: '', timestamp: '' })
   const [result, setResult] = useState(null)
+  
+  // --- Autocomplete State ---
+  const [allSymbols, setAllSymbols] = useState([])
+  const [suggestions, setSuggestions] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  useEffect(() => {
+    const fetchSymbols = async () => {
+      try {
+        const res = await fetch('/api/symbols')
+        const data = await res.json()
+        if (Array.isArray(data)) setAllSymbols(data)
+      } catch (err) {
+        console.error("Symbols fetch skip:", err)
+      }
+    }
+    fetchSymbols()
+  }, [])
+
+  const handlePairInput = (val) => {
+    const search = val.toUpperCase()
+    setTradeData({ ...tradeData, pair: search })
+
+    if (search.length > 0) {
+      const filtered = allSymbols
+        .filter(s => s.startsWith(search))
+        .slice(0, 5) // Top 5 matches
+      setSuggestions(filtered)
+      setShowSuggestions(true)
+    } else {
+      setShowSuggestions(false)
+    }
+  }
+
+  const selectPair = (p) => {
+    setTradeData({ ...tradeData, pair: p })
+    setShowSuggestions(false)
+  }
 
   const handleExplain = async (e) => {
     e.preventDefault()
@@ -388,14 +426,44 @@ function App() {
 
                 <div className="glass-card p-6 border-white/10">
                   <form onSubmit={handleExplain} className="space-y-5">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-binance-secondary uppercase">Trading Pair</label>
-                      <input 
-                        className="binance-input w-full" 
-                        placeholder="BTCUSDT" 
-                        value={tradeData.pair}
-                        onChange={e => setTradeData({...tradeData, pair: e.target.value.toUpperCase()})}
-                      />
+                    <div className="space-y-2 relative">
+                      <label className="text-xs font-bold text-binance-secondary uppercase tracking-widest">Trading Pair</label>
+                      <div className="relative group/input">
+                        <input 
+                          className="binance-input w-full pl-10" 
+                          placeholder="e.g. BTCUSDT" 
+                          autoComplete="off"
+                          value={tradeData.pair}
+                          onChange={e => handlePairInput(e.target.value)}
+                          onFocus={() => tradeData.pair && setShowSuggestions(true)}
+                          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                        />
+                        <Search className="absolute left-3 top-2.5 w-4 h-4 text-binance-secondary group-focus-within/input:text-binance-primary transition-colors" />
+                      </div>
+
+                      {/* Autocomplete Dropdown */}
+                      <AnimatePresence>
+                        {showSuggestions && suggestions.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="absolute left-0 right-0 top-full mt-2 z-[60] glass-card border-white/10 overflow-hidden shadow-2xl backdrop-blur-3xl"
+                          >
+                            {suggestions.map((p) => (
+                              <button
+                                key={p}
+                                type="button"
+                                onClick={() => selectPair(p)}
+                                className="w-full text-left px-4 py-3 text-sm font-bold hover:bg-white/5 hover:text-binance-primary transition-all flex items-center justify-between border-b border-white/5 last:border-0"
+                              >
+                                <span>{p}</span>
+                                <div className="px-1.5 py-0.5 rounded bg-binance-primary/10 text-[9px] text-binance-primary uppercase">Active</div>
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
