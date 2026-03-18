@@ -794,12 +794,22 @@ function App() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-binance-secondary uppercase">Entry Date/Time (Optional)</label>
-                        <input className="binance-input w-full" placeholder="Defaults to NOW" value={tradeData.timestamp} onChange={e => setTradeData({...tradeData, timestamp: e.target.value})} />
+                        <input 
+                          type="datetime-local"
+                          className="binance-input w-full text-xs [color-scheme:dark]" 
+                          value={tradeData.timestamp} 
+                          onChange={e => setTradeData({...tradeData, timestamp: e.target.value})} 
+                        />
                         <p className="text-[9px] text-binance-secondary/60 leading-tight italic">*Momentum scan.</p>
                       </div>
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-binance-secondary uppercase">Exit Date/Time (Optional)</label>
-                        <input className="binance-input w-full" placeholder="Defaults to NOW" value={tradeData.exitTimestamp} onChange={e => setTradeData({...tradeData, exitTimestamp: e.target.value})} />
+                        <input 
+                          type="datetime-local"
+                          className="binance-input w-full text-xs [color-scheme:dark]" 
+                          value={tradeData.exitTimestamp} 
+                          onChange={e => setTradeData({...tradeData, exitTimestamp: e.target.value})} 
+                        />
                         <p className="text-[9px] text-binance-secondary/60 leading-tight italic">*Liquidity scan.</p>
                       </div>
                     </div>
