@@ -746,7 +746,10 @@ function App() {
         if (data.error) throw new Error(data.error)
         setResult(data)
       } catch (e) {
-        throw new Error("The API returned an invalid response. Binance might be rate-limiting. Try once more in 10s.")
+        if (text.includes("504") || text.includes("Gateway Timeout")) {
+          throw new Error("Vercel Gateway Timeout: Binance is taking too long to respond. Try a different pair or shorter timeframe.")
+        }
+        throw new Error(e.message || "The Claw encountered a data glitch. Try once more in 5s.")
       }
     } catch (err) {
       setToast({ message: err.message })

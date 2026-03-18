@@ -46,9 +46,9 @@ export default async function handler(req, res) {
     const end = tradeTs + 600000;
     const binanceUrl = `https://data-api.binance.vision/api/v3/klines?symbol=${pair.toUpperCase()}&interval=1m&startTime=${start}&endTime=${end}&limit=20`;
     
-    // Parallel Fetching to save time
+    // Parallel Fetching to save time (Strict 4.5s timeout for Vercel Hobby tier)
     const fetchPromises = [
-      axios.get(binanceUrl, { headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {}, timeout: 5000 })
+      axios.get(binanceUrl, { headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {}, timeout: 4500 })
     ];
 
     const needsSecondFetch = Math.abs(exitTs - tradeTs) > 600000;
@@ -56,13 +56,17 @@ export default async function handler(req, res) {
       const exitStart = exitTs - 600000;
       const exitEnd = exitTs + 600000;
       const exitUrl = `https://data-api.binance.vision/api/v3/klines?symbol=${pair.toUpperCase()}&interval=1m&startTime=${exitStart}&endTime=${exitEnd}&limit=20`;
-      fetchPromises.push(axios.get(exitUrl, { headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {}, timeout: 5000 }));
+      fetchPromises.push(axios.get(exitUrl, { headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {}, timeout: 4500 }));
     }
 
-    const responses = await Promise.all(fetchPromises.map(p => p.catch(e => ({ error: e }))));
+    const responses = await Promise.all(fetchPromises.map(p => p.catch(e => e)));
     
     const entryRes = responses[0];
-    if (entryRes.error) return res.status(200).json({ error: "Market Scout failed. Binance is busy or the pair is invalid." });
+    if (entryRes.isAxiosError) {
+      const msg = entryRes.response?.data?.msg || "Market Scout failed. Ensure pair is valid.";
+      if (msg.includes("Invalid symbol")) return res.status(200).json({ error: `The Claw can't find '${pair}'. Check symbol (e.g. BTCUSDT).` });
+      return res.status(200).json({ error: "Binance Connection Timeout. High market traffic. Try in 5s." });
+    }
     
     const klines = entryRes.data;
     if (!klines || klines.length === 0) return res.status(200).json({ error: `Market Ghost Town: No data for ${pair} at this time.` });
