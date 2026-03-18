@@ -485,9 +485,27 @@ const InsightCard = ({ result }) => {
           <Zap className="w-4 h-4 fill-binance-primary" />
           Improvement: {result.improvement}
         </div>
+        
+        {/* PnL Overlay */}
+        {result.metrics.pnl && (
+          <div className={cn(
+            "mt-6 px-4 py-3 rounded-xl border flex items-center justify-between",
+            parseFloat(result.metrics.pnl) >= 0 
+              ? "bg-binance-green/10 border-binance-green/30" 
+              : "bg-binance-red/10 border-binance-red/30"
+          )}>
+            <div className="flex items-center gap-2">
+              <div className={cn("w-2 h-2 rounded-full animate-pulse", parseFloat(result.metrics.pnl) >= 0 ? "bg-binance-green" : "bg-binance-red")} />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-binance-secondary">Realized PnL</span>
+            </div>
+            <span className={cn("text-xl font-mono font-bold", parseFloat(result.metrics.pnl) >= 0 ? "text-binance-green" : "text-binance-red")}>
+              {parseFloat(result.metrics.pnl) >= 0 ? '+' : ''}{result.metrics.pnl}%
+            </span>
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <FlippableMetricCard 
           title="RSI"
           value={result.metrics.rsi}
@@ -507,6 +525,15 @@ const InsightCard = ({ result }) => {
         />
         
         <FlippableMetricCard 
+          title="High/Low"
+          value={`$${result.metrics.maxHigh?.toLocaleString()}`}
+          subtext={`Min: $${result.metrics.minLow?.toLocaleString()}`}
+          icon={Search}
+          iconColor="text-binance-yellow"
+          explanation="The local range during your trade session. The closer your exit was to the High ($${result.metrics.maxHigh}), the better your trade timing."
+        />
+
+        <FlippableMetricCard 
           title="Last Price"
           value={result.metrics.lastPrice?.toLocaleString()}
           subtext="Market Snapshot"
@@ -524,7 +551,7 @@ function App() {
   const [showLanding, setShowLanding] = useState(true)
   const [activeTab, setActiveTab] = useState('trade')
   const [loading, setLoading] = useState(false)
-  const [tradeData, setTradeData] = useState({ pair: '', entry: '', timestamp: '' })
+  const [tradeData, setTradeData] = useState({ pair: '', entry: '', exit: '', timestamp: '' })
   const [result, setResult] = useState(null)
   
   // --- Toast State ---
@@ -570,8 +597,8 @@ function App() {
 
   const handleExplain = async (e) => {
     e.preventDefault()
-    if (!tradeData.pair || !tradeData.entry || !tradeData.timestamp) {
-      setToast({ message: "Claw Requirement: All fields must be populated to analyze market context." })
+    if (!tradeData.pair || !tradeData.entry || !tradeData.exit || !tradeData.timestamp) {
+      setToast({ message: "Claw Requirement: All fields (including Exit Price) must be populated." })
       return
     }
     
@@ -672,12 +699,16 @@ function App() {
                         <input className="binance-input w-full" placeholder="65000" type="number" value={tradeData.entry} onChange={e => setTradeData({...tradeData, entry: e.target.value})} />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs font-bold text-binance-secondary uppercase">Timestamp</label>
-                        <input className="binance-input w-full" placeholder="2024-03-15 12:00" value={tradeData.timestamp} onChange={e => setTradeData({...tradeData, timestamp: e.target.value})} />
+                        <label className="text-xs font-bold text-binance-secondary uppercase">Exit Price</label>
+                        <input className="binance-input w-full border-binance-green/20" placeholder="68000" type="number" value={tradeData.exit} onChange={e => setTradeData({...tradeData, exit: e.target.value})} />
                       </div>
                     </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-binance-secondary uppercase">Trade Date/Time</label>
+                      <input className="binance-input w-full" placeholder="e.g. 2024-03-15 12:00" value={tradeData.timestamp} onChange={e => setTradeData({...tradeData, timestamp: e.target.value})} />
+                    </div>
                     <button disabled={loading} className="binance-btn-primary w-full flex items-center justify-center gap-2 group disabled:opacity-50">
-                      {loading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : "Claw Market Context"}
+                      {loading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : "Initiate Audit"}
                     </button>
                   </form>
                 </div>

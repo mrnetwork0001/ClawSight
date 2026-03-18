@@ -1,57 +1,44 @@
 import axios from 'axios';
 
-// Helper: Calculate RSI (Relative Strength Index)
+// Helper: Calculate RSI
 function calculateRSI(prices) {
-  if (prices.length < 14) return 50; // Not enough data for accurate RSI
-  
-  let gains = 0;
-  let losses = 0;
-
+  if (prices.length < 14) return 50;
+  let gains = 0, losses = 0;
   for (let i = 1; i < prices.length; i++) {
     const diff = prices[i] - prices[i - 1];
-    if (diff >= 0) gains += diff;
-    else losses -= diff;
+    if (diff >= 0) gains += diff; else losses -= diff;
   }
-
   const avgGain = gains / (prices.length - 1);
   const avgLoss = losses / (prices.length - 1);
-  
   if (avgLoss === 0) return 100;
   const rs = avgGain / avgLoss;
   return Math.round(100 - (100 / (1 + rs)));
 }
 
-// Helper: Calculate Volatility (Standard Deviation of % returns)
+// Helper: Calculate Volatility
 function calculateVolatility(prices) {
   const returns = [];
   for (let i = 1; i < prices.length; i++) {
     returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
   }
-  
   const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
   const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / returns.length;
-  const stdDev = Math.sqrt(variance);
-  
-  // Annualized volatility (approx for 1m klines across 20m)
-  return (stdDev * 100).toFixed(2); 
+  return (Math.sqrt(variance) * 100).toFixed(2);
 }
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { pair, entry, timestamp } = req.body;
+  const { pair, entry, exit, timestamp } = req.body;
   const BINANCE_KEY = process.env.BINANCE_API_KEY;
 
   try {
     const tradeTs = new Date(timestamp).getTime();
-    if (isNaN(tradeTs)) {
-      return res.status(400).json({ error: `Invalid Timestamp format: "${timestamp}". Use YYYY-MM-DD HH:MM` });
-    }
+    if (isNaN(tradeTs)) return res.status(400).json({ error: "Invalid Timestamp format." });
 
     const start = tradeTs - 600000;
     const end = tradeTs + 600000;
 
-    // 1. Fetch Binance Data (using the more resilient vision endpoint)
     const binanceUrl = `https://data-api.binance.vision/api/v3/klines?symbol=${pair}&interval=1m&startTime=${start}&endTime=${end}&limit=20`;
     
     let binanceResponse;
@@ -61,50 +48,62 @@ export default async function handler(req, res) {
         timeout: 5000
       });
     } catch (binanceErr) {
-      const msg = binanceErr.response?.data?.msg || binanceErr.message;
-      return res.status(502).json({ error: `Binance API Error: ${msg}. Check your Trading Pair and Keys.` });
+      return res.status(502).json({ error: `Binance unreachable: ${binanceErr.message}` });
     }
     
     const klines = binanceResponse.data;
     const closes = klines.map(k => parseFloat(k[4]));
+    const highs = klines.map(k => parseFloat(k[2]));
+    const lows = klines.map(k => parseFloat(k[3]));
+    
+    const maxHigh = Math.max(...highs);
+    const minLow = Math.min(...lows);
     const lastPrice = closes[closes.length - 1];
-
-    // 2. REAL MATH: RSI & Volatility
+    
+    // Performance Math
     const rsi = calculateRSI(closes);
     const volatility = calculateVolatility(closes);
-
-    // 3. AI Brain: Senior Risk Manager (Witty & Professional)
-    let verdict, explanation, improvement;
+    const pnl = (((parseFloat(exit) - parseFloat(entry)) / parseFloat(entry)) * 100).toFixed(2);
     
-    if (rsi > 70) {
-      verdict = 'Greedy Peak Picker';
-      explanation = `The RSI was screaming ${rsi} (Overbought). You entered ${pair} right as the whales were preparing to dump.`;
-      improvement = "Wait for an RSI reset below 40 before FOMOing into top-tier liquidity sweeps.";
-    } else if (rsi < 30) {
-      verdict = 'Smart Accumulation';
-      explanation = `Incredible timing. RSI was bottomed out at ${rsi}. You effectively "bought the fear" when everyone else was selling.`;
-      improvement = "Maintain your target. This is a high-probability reversal zone.";
+    // AI AUDIT LOGIC
+    let verdict, explanation, improvement;
+    const exitVal = parseFloat(exit);
+    
+    // Top/Bottom Roast Logic
+    const isTopExit = exitVal >= maxHigh * 0.995;
+    const isBottomEntry = parseFloat(entry) <= minLow * 1.005;
+
+    if (pnl > 0) {
+      if (isTopExit) {
+        verdict = 'Absolute Sniper';
+        explanation = `Mathematically flawless. You extracted ${pnl}% profit and sold at $${exit}, which was practically the local top ($${maxHigh}).`;
+        improvement = "None. Go get a coffee, you outplayed the bots.";
+      } else {
+        verdict = 'Safe Profit';
+        explanation = `You made ${pnl}% profit, but left money on the table. The market peaked at $${maxHigh} while you sold at $${exit}.`;
+        improvement = "Try using a trailing stop-loss to capture that extra meat on the bone.";
+      }
     } else {
-      verdict = 'Safe & Calculated';
-      explanation = `Balanced entry. RSI is neutral at ${rsi} and volatility is stable at ${volatility}%. You aren't chasing ghosts.`;
-      improvement = "Watch the 15m volume profile to ensure the trend has legs.";
+      verdict = 'Liquidity Donor';
+      explanation = `You exited at ${pnl}% loss. RSI was ${rsi} at the time. You likely panic-sold right before a potential reversal.`;
+      improvement = "Check the RSI and volume profile. If volatility is spikey, hold your breath or set wider stops.";
     }
 
-    // Special case for massive profit
-    if (lastPrice > entry * 1.05) {
-      verdict = 'Swimming with Whales';
-      explanation = `You are currently up over 5% in just minutes. This entry at ${entry} was mathematically flawless.`;
+    // Special Roast for buying the top
+    if (parseFloat(entry) >= maxHigh * 0.99) {
+      verdict = 'FOMO Casualty';
+      explanation = `You bought the absolute local peak of $${maxHigh}. The whales were waiting for you to provide the exit liquidity.`;
+      improvement = "Never buy when the 1m RSI is above 80. Just don't.";
     }
 
     return res.status(200).json({
       verdict,
       explanation,
       improvement,
-      metrics: { rsi, volatility, lastPrice }
+      metrics: { rsi, volatility, lastPrice, pnl, maxHigh, minLow }
     });
 
   } catch (error) {
-    console.error('ClawSight Backend Error:', error.message);
-    return res.status(500).json({ error: 'The Claw failed to reach Binance. Check your API Keys.' });
+    return res.status(500).json({ error: 'The Claw failed. Check your API settings.' });
   }
 }
