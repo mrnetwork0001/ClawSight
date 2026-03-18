@@ -130,7 +130,9 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       verdict, explanation, improvement,
-      metrics: { rsi, volatility, lastPrice, pnl, maxHigh, minLow, exitMaxHigh }
+      metrics: { rsi, volatility, lastPrice, pnl, maxHigh, minLow, exitMaxHigh },
+      timestamp: new Date(tradeTs).toISOString(),
+      exitTimestamp: new Date(exitTs).toISOString()
     });
 
   } catch (error) {
