@@ -14,7 +14,123 @@ function cn(...inputs) {
 
 // --- Dynamic Components ---
 
-const Navbar = ({ activeTab, setActiveTab }) => {
+const LandingPage = ({ onLaunch }) => {
+  return (
+    <div className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
+      {/* Background Animated Orbs */}
+      <motion.div 
+        animate={{ 
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.5, 0.3],
+          x: [0, 50, 0],
+          y: [0, -50, 0]
+        }}
+        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+        className="fixed top-1/4 -left-20 w-96 h-96 bg-binance-primary/20 rounded-full blur-[120px] pointer-events-none" 
+      />
+      <motion.div 
+        animate={{ 
+          scale: [1.2, 1, 1.2],
+          opacity: [0.2, 0.4, 0.2],
+          x: [0, -50, 0],
+          y: [0, 50, 0]
+        }}
+        transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+        className="fixed bottom-1/4 -right-20 w-[500px] h-[500px] bg-binance-green/10 rounded-full blur-[150px] pointer-events-none" 
+      />
+
+      {/* Hero Section */}
+      <div className="max-w-6xl w-full text-center space-y-8 z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center gap-6"
+        >
+          <div className="w-24 h-24 rounded-3xl overflow-hidden glass-card border-binance-primary/30 p-2 shadow-2xl">
+            <img src="/logo.png" alt="ClawSight Logo" className="w-full h-full object-contain" />
+          </div>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+            <Globe className="w-4 h-4 text-binance-primary animate-pulse" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-binance-secondary">Intelligence Layer for Binance Traders</span>
+          </div>
+          <h1 className="text-6xl md:text-8xl font-bold tracking-tight leading-[0.9]">
+            See the <span className="pro-gradient-header">Signal</span><br/>
+            Amidst the <span className="text-white/40 italic font-mono">Noise.</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-binance-secondary max-w-2xl leading-relaxed">
+            Stop guessing your entry logic. ClawSight uses agentic AI to dissect your trades against real-time Binance liquidity.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8"
+        >
+          <button 
+            onClick={onLaunch}
+            className="binance-btn-primary px-12 py-5 text-xl font-bold flex items-center gap-3 group"
+          >
+            Launch Terminal
+            <ArrowRight className="w-6 h-6 transition-transform group-hover:translate-x-2" />
+          </button>
+          <a href="#features" className="px-12 py-5 text-xl font-bold border border-white/10 rounded-2xl bg-white/[0.02] hover:bg-white/5 transition-all backdrop-blur-md">
+            View Analytics
+          </a>
+        </motion.div>
+
+        {/* Feature Grid */}
+        <div id="features" className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-24 text-left">
+          {[
+            { 
+              icon: Zap, 
+              title: "Trade Explainer", 
+              desc: "AI-driven analysis of your entries based on history and market mood.",
+              color: "text-binance-primary"
+            },
+            { 
+              icon: Activity, 
+              title: "Momentum Grid", 
+              desc: "Real-time performance heatmaps of the top 12 Binance assets.",
+              color: "text-binance-green"
+            },
+            { 
+              icon: Shield, 
+              title: "Risk Desk", 
+              desc: "Institutional-grade monitoring for liquidity sweeps and congestion.",
+              color: "text-binance-red"
+            }
+          ].map((feature, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="glass-card p-8 border-white/5 space-y-4 hover:border-white/20 transition-all cursor-default group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <feature.icon className={cn("w-6 h-6", feature.color)} />
+              </div>
+              <h3 className="text-xl font-bold">{feature.title}</h3>
+              <p className="text-binance-secondary leading-relaxed">
+                {feature.desc}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer Branding */}
+      <div className="mt-24 pb-8 z-10 flex items-center gap-2 opacity-30 grayscale hover:grayscale-0 transition-all">
+        <span className="text-sm font-mono tracking-widest uppercase">Verified OpenClaw Partner</span>
+      </div>
+    </div>
+  )
+}
+
+const Navbar = ({ activeTab, setActiveTab, onGoLanding }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const tabs = [
@@ -27,7 +143,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
     <>
       <nav className="fixed top-0 left-0 right-0 h-14 bg-binance-black/80 backdrop-blur-xl border-b border-white/5 z-50 px-4 md:px-8 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('trade')}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={onGoLanding}>
             <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center p-0.5">
               <img src="/logo.png" alt="ClawSight Logo" className="w-full h-full object-contain" />
             </div>
@@ -332,6 +448,7 @@ const InsightCard = ({ result }) => {
 // --- Main App Component ---
 
 function App() {
+  const [showLanding, setShowLanding] = useState(true)
   const [activeTab, setActiveTab] = useState('trade')
   const [loading, setLoading] = useState(false)
   const [tradeData, setTradeData] = useState({ pair: '', entry: '', timestamp: '' })
@@ -399,9 +516,17 @@ function App() {
     }
   }
 
+  if (showLanding) {
+    return <LandingPage onLaunch={() => setShowLanding(false)} />
+  }
+
   return (
     <div className="min-h-screen bg-binance-bg text-binance-text selection:bg-binance-primary selection:text-black">
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navbar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        onGoLanding={() => setShowLanding(true)}
+      />
       
       <main className="container mx-auto px-4 md:px-8 pt-24 pb-12">
         <AnimatePresence mode="wait">
