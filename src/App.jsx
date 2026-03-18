@@ -32,71 +32,7 @@ const Navbar = () => (
   </nav>
 )
 
-const InsightCard = ({ result }) => {
-  const isPositive = result.verdict === 'Perfect Entry' || result.verdict === 'Smart Accumulation'
-  
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card p-6 border-white/10 h-full flex flex-col gap-6"
-    >
-      <div className="flex items-start justify-between">
-        <div>
-          <h3 className="text-binance-secondary text-sm font-medium mb-1">THE VERDICT</h3>
-          <p className={cn(
-            "text-2xl font-bold tracking-tight",
-            isPositive ? "text-binance-green" : "text-binance-red"
-          )}>{result.verdict}</p>
-        </div>
-        <div className={cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center border",
-          isPositive ? "bg-binance-green/10 border-binance-green/20" : "bg-binance-red/10 border-binance-red/20"
-        )}>
-          {isPositive ? (
-            <CheckCircle2 className={cn("w-6 h-6", "text-binance-green")} />
-          ) : (
-            <ShieldAlert className={cn("w-6 h-6", "text-binance-red")} />
-          )}
-        </div>
-      </div>
 
-      <div className="space-y-4">
-        <div>
-          <h4 className="text-binance-secondary text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
-            <Terminal className="w-3 h-3" /> Market Context
-          </h4>
-          <p className="text-binance-text leading-relaxed text-sm">
-            {result.explanation}
-          </p>
-        </div>
-
-        <div className="p-4 rounded-lg bg-binance-primary/5 border border-binance-primary/10">
-          <h4 className="text-binance-primary text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-2">
-            <Zap className="w-3 h-3 fill-binance-primary" /> Pro Improvement
-          </h4>
-          <p className="text-sm text-binance-text italic">
-            "{result.improvement}"
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
-        <div>
-          <span className="text-[10px] text-binance-secondary block uppercase">1H Volatility</span>
-          <span className="text-sm font-mono">{result.metrics.volatility}%</span>
-        </div>
-        <div>
-          <span className="text-[10px] text-binance-secondary block uppercase">1H RSI</span>
-          <span className={cn(
-            "text-sm font-mono",
-            result.metrics.rsi > 70 ? "text-binance-red" : result.metrics.rsi < 30 ? "text-binance-green" : "text-white"
-          )}>{result.metrics.rsi}</span>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
 
 function App() {
   const [loading, setLoading] = useState(false)
@@ -118,6 +54,11 @@ function App() {
         body: JSON.stringify(tradeData)
       })
       const analysis = await response.json()
+      
+      if (analysis.error) {
+        alert(`Analysis Error: ${analysis.error}`)
+        return
+      }
       
       setResult(analysis)
     } catch (err) {
@@ -273,6 +214,82 @@ function App() {
       <div className="fixed -top-20 -right-20 w-80 h-80 bg-binance-green/5 rounded-full blur-[100px] pointer-events-none -z-10" />
     </div>
   )
+}
+
+function InsightCard({ result }) {
+  if (!result || !result.metrics) return null;
+  const isPositive = result.verdict === 'Perfect Entry' || result.verdict === 'Smart Accumulation' || result.verdict === 'Swimming with Whales'
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      {/* Verdict Panel */}
+      <div className="glass-card p-8 border-binance-primary/20 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 p-4">
+          <div className="px-2 py-1 rounded bg-binance-primary/10 border border-binance-primary/20 flex items-center gap-1.5">
+            <span className="w-1 h-1 rounded-full bg-binance-primary animate-pulse" />
+            <span className="text-[10px] font-bold text-binance-primary uppercase tracking-wider">Analysis Active</span>
+          </div>
+        </div>
+        
+        <h2 className="text-binance-secondary text-xs font-bold uppercase tracking-widest mb-2">The Verdict</h2>
+        <h3 className={cn(
+          "text-3xl md:text-4xl font-bold mb-4",
+          isPositive ? "text-binance-green" : "text-binance-red"
+        )}>{result.verdict}</h3>
+        <p className="text-binance-text text-lg leading-relaxed border-l-2 border-binance-primary/50 pl-6 my-6 italic decoration-white/10">
+          "{result.explanation}"
+        </p>
+
+        <div className="flex items-center gap-2 text-binance-primary text-sm font-medium pt-4">
+          <Zap className="w-4 h-4 fill-binance-primary" />
+          Improvement: {result.improvement}
+        </div>
+      </div>
+
+      {/* Metrics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="glass-card p-6 border-white/5">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs text-binance-secondary uppercase font-bold">RSI</span>
+            <div className={cn(
+              "p-1 rounded bg-binance-primary/10",
+              result.metrics.rsi > 70 ? "text-binance-red" : "text-binance-primary"
+            )}>
+              <TrendingUp className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-mono font-bold">{result.metrics.rsi}</div>
+          <div className="text-[10px] text-binance-secondary mt-1">Relative Strength Index</div>
+        </div>
+        
+        <div className="glass-card p-6 border-white/5">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs text-binance-secondary uppercase font-bold">Volatility</span>
+            <div className="p-1 rounded bg-binance-green/10 text-binance-green">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-mono font-bold">{result.metrics.volatility}%</div>
+          <div className="text-[10px] text-binance-secondary mt-1">20m Standard Deviation</div>
+        </div>
+        
+        <div className="glass-card p-6 border-white/5">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs text-binance-secondary uppercase font-bold">Last Price</span>
+            <div className="p-1 rounded bg-white/10 text-binance-secondary">
+              <Clock className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-mono font-bold">{result.metrics.lastPrice?.toLocaleString()}</div>
+          <div className="text-[10px] text-binance-secondary mt-1">Market Snapshot</div>
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
 export default App
