@@ -91,11 +91,18 @@ export default async function handler(req, res) {
     const exitVal = parseFloat(exit);
     const entryVal = parseFloat(entry);
     
-    // Top/Bottom Roast
-    const isTopExit = exitVal >= exitMaxHigh * 0.998;
-    const isBottomEntry = entryVal <= minLow * 1.002;
+    // Truth Filter: Verify if prices actually existed in those windows
+    const entryDeviation = Math.abs((entryVal - (maxHigh + minLow) / 2) / ((maxHigh + minLow) / 2)) * 100;
+    const exitDeviation = Math.abs((exitVal - exitMaxHigh) / exitMaxHigh) * 100;
+    
+    const isImpossibleEntry = entryVal > maxHigh * 1.02 || entryVal < minLow * 0.98;
+    const isImpossibleExit = exitVal > exitMaxHigh * 1.02;
 
-    if (pnl > 0) {
+    if (isImpossibleEntry) {
+      verdict = 'Impossible Entry';
+      explanation = `Your entry price ($${entryVal}) never existed in the 20m window around your timestamp ($${minLow} - $${maxHigh}). You are auditing a Ghost Trade.`;
+      improvement = "Ensure your entry price matches the actual exchange tape for that minute.";
+    } else if (pnl > 0) {
       if (isTopExit) {
         verdict = 'Absolute Sniper';
         explanation = `Mathematically flawless. You caught the bottom near $${minLow} and extracted ${pnl}% profit, selling at the absolute exit peak of $${exitVal}.`;
@@ -111,8 +118,8 @@ export default async function handler(req, res) {
       improvement = "Wait for RSI stabilization below 40 before entering into a downtrend.";
     }
 
-    // Special Roast for buying the very top
-    if (entryVal >= maxHigh * 0.999) {
+    // Special Roast for buying the very top (if it was a real price)
+    if (!isImpossibleEntry && entryVal >= maxHigh * 0.999) {
       verdict = 'FOMO Casualty';
       explanation = `You bought the absolute local ceiling of $${maxHigh}. The whales were waiting for exactly this type of retail liquidity.`;
       improvement = "Never buy the first green candle after a parabolic move.";
