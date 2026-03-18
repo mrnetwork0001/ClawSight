@@ -125,6 +125,48 @@ const LandingPage = ({ onLaunch }) => {
   )
 }
 
+const FlippableMetricCard = ({ title, value, subtext, icon: Icon, explanation, iconColor }) => {
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  return (
+    <div 
+      className="h-[140px] perspective-1000 cursor-pointer group"
+      onClick={() => setIsFlipped(!isFlipped)}
+    >
+      <motion.div
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
+        className="relative w-full h-full preserve-3d"
+      >
+        {/* Front Side */}
+        <div className="absolute inset-0 backface-hidden glass-card p-6 border-white/5 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-binance-secondary uppercase font-bold">{title}</span>
+            <div className={cn("p-1 rounded bg-white/5", iconColor)}>
+              <Icon className="w-4 h-4" />
+            </div>
+          </div>
+          <div>
+            <div className="text-2xl font-mono font-bold">{value}</div>
+            <div className="text-[10px] text-binance-secondary mt-1">{subtext}</div>
+          </div>
+          <div className="absolute bottom-2 right-4 opacity-0 group-hover:opacity-40 transition-opacity text-[8px] uppercase tracking-tighter">Click to learn</div>
+        </div>
+
+        {/* Back Side */}
+        <div 
+          className="absolute inset-0 backface-hidden glass-card p-6 border-binance-primary/20 bg-binance-primary/5 flex flex-col justify-center items-center text-center rotate-y-180"
+        >
+          <p className="text-[11px] leading-relaxed text-binance-text italic">
+            {explanation}
+          </p>
+          <div className="mt-2 text-[8px] font-bold text-binance-primary uppercase tracking-widest">Return to Data</div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const Footer = () => (
   <div className="py-8 z-10 flex items-center justify-center gap-2 opacity-50 hover:opacity-100 transition-all">
     <span className="text-sm font-mono tracking-widest uppercase">
@@ -411,38 +453,31 @@ const InsightCard = ({ result }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="glass-card p-6 border-white/5">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs text-binance-secondary uppercase font-bold">RSI</span>
-            <div className={cn("p-1 rounded", result.metrics.rsi > 70 ? "text-binance-red bg-binance-red/10" : "text-binance-primary bg-binance-primary/10")}>
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-mono font-bold">{result.metrics.rsi}</div>
-          <div className="text-[10px] text-binance-secondary mt-1">Relative Strength Index</div>
-        </div>
+        <FlippableMetricCard 
+          title="RSI"
+          value={result.metrics.rsi}
+          subtext="Relative Strength Index"
+          icon={TrendingUp}
+          iconColor={result.metrics.rsi > 70 ? "text-binance-red" : "text-binance-primary"}
+          explanation="Measures 'speed' of price moves. >70 is Overbought (danger zone), <30 is Oversold (potential bounce). Your logic depends on this reset."
+        />
         
-        <div className="glass-card p-6 border-white/5">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs text-binance-secondary uppercase font-bold">Volatility</span>
-            <div className="p-1 rounded bg-binance-green/10 text-binance-green">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-mono font-bold">{result.metrics.volatility}%</div>
-          <div className="text-[10px] text-binance-secondary mt-1">20m Standard Deviation</div>
-        </div>
+        <FlippableMetricCard 
+          title="Volatility"
+          value={`${result.metrics.volatility}%`}
+          subtext="20m Standard Deviation"
+          icon={Activity}
+          iconColor="text-binance-green"
+          explanation="Measures market 'turbulence'. High volatility means massive opportunity but requires tighter stops to avoid being 'Clawed' by the noise."
+        />
         
-        <div className="glass-card p-6 border-white/5">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs text-binance-secondary uppercase font-bold">Last Price</span>
-            <div className="p-1 rounded bg-white/10 text-binance-secondary">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-mono font-bold">{result.metrics.lastPrice?.toLocaleString()}</div>
-          <div className="text-[10px] text-binance-secondary mt-1">Market Snapshot</div>
-        </div>
+        <FlippableMetricCard 
+          title="Last Price"
+          value={result.metrics.lastPrice?.toLocaleString()}
+          subtext="Market Snapshot"
+          icon={Clock}
+          explanation="The post-trade reality. Comparing this to your entry vs the 'Claw' verdict proves whether the market validated your analytical path."
+        />
       </div>
     </motion.div>
   );
