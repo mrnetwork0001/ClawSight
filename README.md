@@ -14,6 +14,9 @@ If you bought the absolute ceiling, our AI gracefully calls you a **"FOMO Casual
 ##  Core Features
 - **Dual-Moment Audit**: Provide both **Entry** and **Exit** timestamps (optional) for a full historical deep-dive into your trade timing.
 - **Relaxed "Truth Filter"**: We accommodate memory blur. Input prices up to **50% off** market reality, and our AI will still provide a professional, precise audit (flagging as 'Estimated' only after that).
+
+  <img width="1676" height="816" alt="ClawSight_Audit_BTCUSDT_1773817020890" src="https://github.com/user-attachments/assets/f5e41191-5fde-431b-bd70-786ab55fe35c" />
+
 - **Shareable PnL Cards**: Generate a high-quality, Binance-branded performance card in one click. Perfect for sharing your "Sniper" or "Safe Profit" logic on Social Media.
 - **Global Risk Monitor**: A real-time market scanner that detects liquidity sweeps, volatility spikes, and bearish signals across the top Binance pairs.
 - **Top/Bottom Accuracy**: Mathematically proves how close your entry/exit were to the local market extremes.
