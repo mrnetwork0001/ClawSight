@@ -190,7 +190,8 @@ const FlippableMetricCard = ({ title, value, subtext, icon: Icon, explanation, i
 
         {/* Back Side */}
         <div 
-          className="absolute inset-0 backface-hidden glass-card p-6 border-binance-primary/20 bg-binance-primary/5 flex flex-col justify-center items-center text-center rotate-y-180"
+          style={{ transform: 'rotateY(180deg)' }}
+          className="absolute inset-0 backface-hidden glass-card p-6 border-binance-primary/20 bg-binance-primary/5 flex flex-col justify-center items-center text-center"
         >
           <p className="text-[11px] leading-relaxed text-binance-text italic">
             {explanation}
