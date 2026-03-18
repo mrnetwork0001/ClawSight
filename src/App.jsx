@@ -683,14 +683,14 @@ function App() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="absolute left-0 right-0 top-full mt-2 z-[60] glass-card border-white/10 overflow-hidden shadow-2xl backdrop-blur-3xl"
+                            className="absolute left-0 right-0 top-full mt-2 z-[60] bg-[#0b0e11] border border-white/10 overflow-hidden shadow-2xl rounded-xl"
                           >
                             {suggestions.map((p) => (
                               <button
                                 key={p}
                                 type="button"
                                 onClick={() => selectPair(p)}
-                                className="w-full text-left px-4 py-3 text-sm font-bold hover:bg-white/5 hover:text-binance-primary transition-all flex items-center justify-between border-b border-white/5 last:border-0"
+                                className="w-full text-left px-4 py-3 text-sm font-bold text-white hover:bg-white/5 hover:text-binance-primary transition-all flex items-center justify-between border-b border-white/5 last:border-0"
                               >
                                 <span>{p}</span>
                                 <div className="px-1.5 py-0.5 rounded bg-binance-primary/10 text-[9px] text-binance-primary uppercase">Active</div>
