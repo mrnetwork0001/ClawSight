@@ -1,5 +1,5 @@
 #  ClawSight (Trade Audit Terminal)
-### *Audit Your PnL. Roast Your Bias. Built for the Binance Builder Competition 2024.*
+### *Audit Your PnL. Roast Your Bias. Built for the Binance Ecosystem.*
 
 **ClawSight** is the first agentic AI dashboard designed to tell you the mathematical truth about your trades. Using the **OpenClaw SDK**, it retrieves actual Binance market data and audits your trade performance—grading you on your timing, risk management, and market awareness.
 
