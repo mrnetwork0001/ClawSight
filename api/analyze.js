@@ -33,42 +33,50 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { pair, entry, exit, timestamp } = req.body;
+  const { pair, entry, exit, timestamp, exitTimestamp } = req.body;
   const BINANCE_KEY = process.env.BINANCE_API_KEY;
 
   try {
     const tradeTs = new Date(timestamp).getTime();
-    if (isNaN(tradeTs)) return res.status(400).json({ error: "Invalid Timestamp format. Try: YYYY-MM-DD HH:MM" });
+    const exitTs = exitTimestamp ? new Date(exitTimestamp).getTime() : Date.now();
+    
+    if (isNaN(tradeTs)) return res.status(400).json({ error: "Invalid Entry Timestamp." });
 
-    // Ensure we are fetching 10 mins around the trade
+    // Fetch Entry Context
     const start = tradeTs - 600000;
     const end = tradeTs + 600000;
-
     const binanceUrl = `https://data-api.binance.vision/api/v3/klines?symbol=${pair}&interval=1m&startTime=${start}&endTime=${end}&limit=20`;
     
-    let binanceResponse;
-    try {
-      binanceResponse = await axios.get(binanceUrl, {
-        headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {},
-        timeout: 8000
-      });
-    } catch (binanceErr) {
-      return res.status(200).json({ 
-        error: "Binance connection timeout. The market is moving too fast for the free API tier. Try again in 5s." 
-      });
-    }
+    const entryResponse = await axios.get(binanceUrl, {
+      headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {},
+      timeout: 8000
+    });
     
-    const klines = binanceResponse.data;
-    if (!klines || klines.length === 0) {
-      return res.status(200).json({ 
-        error: "Market Ghost Town: No kline data found for this pair at this specific time. Binance might not have history for this range." 
-      });
-    }
+    const klines = entryResponse.data;
+    if (!klines || klines.length === 0) return res.status(200).json({ error: "Market Ghost Town at Entry: No kline data found." });
 
     const closes = klines.map(k => parseFloat(k[4]));
     const highs = klines.map(k => parseFloat(k[2]));
     const lows = klines.map(k => parseFloat(k[3]));
     
+    // Fetch Exit Context if it's a different moment
+    let exitMaxHigh = Math.max(...highs);
+    if (Math.abs(exitTs - tradeTs) > 600000) {
+      const exitStart = exitTs - 600000;
+      const exitEnd = exitTs + 600000;
+      const exitUrl = `https://data-api.binance.vision/api/v3/klines?symbol=${pair}&interval=1m&startTime=${exitStart}&endTime=${exitEnd}&limit=20`;
+      
+      try {
+        const exitResponse = await axios.get(exitUrl, { headers: BINANCE_KEY ? { 'X-MBX-APIKEY': BINANCE_KEY } : {}, timeout: 5000 });
+        const exitKlines = exitResponse.data;
+        if (exitKlines && exitKlines.length > 0) {
+          exitMaxHigh = Math.max(...exitKlines.map(k => parseFloat(k[2])));
+        }
+      } catch (e) {
+        console.log("Exit Fetch Skip: Using entry context for exit roast.");
+      }
+    }
+
     const maxHigh = Math.max(...highs);
     const minLow = Math.min(...lows);
     const lastPrice = closes[closes.length - 1];
@@ -81,39 +89,40 @@ export default async function handler(req, res) {
     // AI AUDIT LOGIC
     let verdict, explanation, improvement;
     const exitVal = parseFloat(exit);
+    const entryVal = parseFloat(entry);
     
-    // Top/Bottom Roast Logic
-    const isTopExit = exitVal >= maxHigh * 0.995;
-    const isBottomEntry = parseFloat(entry) <= minLow * 1.005;
+    // Top/Bottom Roast
+    const isTopExit = exitVal >= exitMaxHigh * 0.998;
+    const isBottomEntry = entryVal <= minLow * 1.002;
 
     if (pnl > 0) {
       if (isTopExit) {
         verdict = 'Absolute Sniper';
-        explanation = `Mathematically flawless. You extracted ${pnl}% profit and sold at $${exit}, which was practically the local top ($${maxHigh}).`;
-        improvement = "None. High-five your monitor.";
+        explanation = `Mathematically flawless. You caught the bottom near $${minLow} and extracted ${pnl}% profit, selling at the absolute exit peak of $${exitVal}.`;
+        improvement = "None. Consider scaling this logic across more pairs.";
       } else {
         verdict = 'Safe Profit';
-        explanation = `You made ${pnl}% profit. Good discipline. However, the market peaked at $${maxHigh} so there was more meat on the bone.`;
-        improvement = "Try using trailing stops to catch the high-volatility spikes.";
+        explanation = `You made ${pnl}% profit. Good discipline. However, you left money on the table; the market peak during your exit window was $${exitMaxHigh}.`;
+        improvement = "Use trailing stops to ride the trend longer.";
       }
     } else {
       verdict = 'Liquidity Donor';
-      explanation = `Exited at ${pnl}% loss. RSI was ${rsi}. You likely panic-sold right before a potential reversal or bought into a dump.`;
-      improvement = "Wait for RSI to stabilize below 30 before considering a scalp entry.";
+      explanation = `Exited at ${pnl}% loss. RSI at entry was ${rsi}. You likely panic-sold or provided the exit liquidity for a whale.`;
+      improvement = "Wait for RSI stabilization below 40 before entering into a downtrend.";
     }
 
-    // Special Roast for buying the top
-    if (parseFloat(entry) >= maxHigh * 0.99) {
+    // Special Roast for buying the very top
+    if (entryVal >= maxHigh * 0.999) {
       verdict = 'FOMO Casualty';
-      explanation = `Buying power was exhausted. You bought the peak at $${maxHigh}. The whales thank you for your liquidity.`;
-      improvement = "Never buy when price is at a 2h High without volume confirmation.";
+      explanation = `You bought the absolute local ceiling of $${maxHigh}. The whales were waiting for exactly this type of retail liquidity.`;
+      improvement = "Never buy the first green candle after a parabolic move.";
     }
 
     return res.status(200).json({
       verdict,
       explanation,
       improvement,
-      metrics: { rsi, volatility, lastPrice, pnl, maxHigh, minLow }
+      metrics: { rsi, volatility, lastPrice, pnl, maxHigh, minLow, exitMaxHigh }
     });
 
   } catch (error) {

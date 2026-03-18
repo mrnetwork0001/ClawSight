@@ -629,7 +629,7 @@ function App() {
   const [showLanding, setShowLanding] = useState(true)
   const [activeTab, setActiveTab] = useState('trade')
   const [loading, setLoading] = useState(false)
-  const [tradeData, setTradeData] = useState({ pair: '', entry: '', exit: '', timestamp: '' })
+  const [tradeData, setTradeData] = useState({ pair: '', entry: '', exit: '', timestamp: '', exitTimestamp: '' })
   const [result, setResult] = useState(null)
   
   // --- Toast State ---
@@ -684,11 +684,12 @@ function App() {
     try {
       // Use current time if timestamp is empty
       const finalTimestamp = tradeData.timestamp.trim() || new Date().toISOString()
+      const finalExitTimestamp = tradeData.exitTimestamp.trim() || new Date().toISOString()
       
       const response = await fetch(`/api/analyze?cb=${Date.now()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...tradeData, timestamp: finalTimestamp })
+        body: JSON.stringify({ ...tradeData, timestamp: finalTimestamp, exitTimestamp: finalExitTimestamp })
       })
       
       const text = await response.text()
@@ -790,12 +791,17 @@ function App() {
                         <input className="binance-input w-full border-binance-green/20" placeholder="68000" type="number" value={tradeData.exit} onChange={e => setTradeData({...tradeData, exit: e.target.value})} />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-binance-secondary uppercase">Entry Date/Time (Optional)</label>
-                      <input className="binance-input w-full" placeholder="Defaults to NOW" value={tradeData.timestamp} onChange={e => setTradeData({...tradeData, timestamp: e.target.value})} />
-                      <p className="text-[9px] text-binance-secondary/60 leading-tight italic">
-                        *The exact moment to scan for liquidity and market mood.
-                      </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-binance-secondary uppercase">Entry Date/Time (Optional)</label>
+                        <input className="binance-input w-full" placeholder="Defaults to NOW" value={tradeData.timestamp} onChange={e => setTradeData({...tradeData, timestamp: e.target.value})} />
+                        <p className="text-[9px] text-binance-secondary/60 leading-tight italic">*Momentum scan.</p>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold text-binance-secondary uppercase">Exit Date/Time (Optional)</label>
+                        <input className="binance-input w-full" placeholder="Defaults to NOW" value={tradeData.exitTimestamp} onChange={e => setTradeData({...tradeData, exitTimestamp: e.target.value})} />
+                        <p className="text-[9px] text-binance-secondary/60 leading-tight italic">*Liquidity scan.</p>
+                      </div>
                     </div>
                     <button disabled={loading} className="binance-btn-primary w-full flex items-center justify-center gap-2 group disabled:opacity-50">
                       {loading ? <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" /> : "Initiate Audit"}
