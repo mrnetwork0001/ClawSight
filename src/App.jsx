@@ -53,14 +53,14 @@ const Navbar = ({ activeTab, setActiveTab }) => (
 )
 
 const MarketPulse = () => {
-  const [prices, setPrices] = useState([])
+  const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
 
-  const fetchPrices = async () => {
+  const fetchPulse = async () => {
     try {
       const res = await fetch('/api/prices')
-      const data = await res.json()
-      if (!data.error) setPrices(data)
+      const pulseData = await res.json()
+      if (!pulseData.error) setData(pulseData)
     } catch (err) {
       console.error("Pulse Error:", err)
     } finally {
@@ -69,12 +69,12 @@ const MarketPulse = () => {
   }
 
   useEffect(() => {
-    fetchPrices()
-    const interval = setInterval(fetchPrices, 30000) // Refresh every 30s
+    fetchPulse()
+    const interval = setInterval(fetchPulse, 20000) // Refresh every 20s
     return () => clearInterval(interval)
   }, [])
 
-  if (loading && prices.length === 0) {
+  if (loading && data.length === 0) {
     return (
       <div className="flex items-center justify-center p-20">
         <div className="w-10 h-10 border-4 border-binance-primary/10 border-t-binance-primary rounded-full animate-spin" />
@@ -83,34 +83,79 @@ const MarketPulse = () => {
   }
 
   return (
-    <div className="space-y-6 pt-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {prices.map(p => (
+    <div className="space-y-8 pt-6">
+      {/* Top Pulse Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {data.slice(0, 4).map(p => (
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            key={p.pair} 
-            className="glass-card p-4 border-white/5 flex justify-between items-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            key={p.symbol} 
+            className="glass-card p-4 border-white/5 flex flex-col gap-1"
           >
-            <div>
-              <p className="text-[10px] text-binance-secondary font-bold uppercase">{p.pair}</p>
-              <p className="text-lg font-mono font-bold tracking-tighter">${p.price}</p>
+            <div className="flex justify-between items-center text-[10px] font-bold text-binance-secondary uppercase">
+              <span>{p.symbol}USDT</span>
+              <span className={p.up ? "text-binance-green" : "text-binance-red"}>{p.up ? '+' : ''}{p.change}%</span>
             </div>
-            <span className={cn(
-              "text-[10px] font-bold px-2 py-0.5 rounded border",
-              p.up ? "text-binance-green bg-binance-green/10 border-binance-green/20" : "text-binance-red bg-binance-red/10 border-binance-red/20"
-            )}>
-              {p.up ? '+' : ''}{p.change}%
-            </span>
+            <div className="text-xl font-mono font-bold tracking-tighter">${p.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+            <div className="text-[9px] text-white/20">VOL: {p.vol}</div>
           </motion.div>
         ))}
       </div>
-      <div className="glass-card p-8 min-h-[400px] border-dashed border-white/10 flex flex-col items-center justify-center text-center">
-        <Globe className="w-12 h-12 text-binance-primary/20 mb-4 animate-spin-slow" />
-        <h3 className="text-xl font-bold mb-2">Live Heatmap Stream</h3>
-        <p className="text-binance-secondary text-sm max-w-sm italic">
-          Fetching cross-exchange order flow data... Connection established with Brussels (bru1) gateway.
-        </p>
+
+      {/* Momentum Grid (Replacing the placeholder) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-binance-secondary flex items-center gap-2">
+            <Activity className="w-4 h-4" /> Market Momentum Grid
+          </h3>
+          <span className="text-[10px] font-mono text-binance-primary/60">SOURCE: BINANCE_STREAM_HKG_1</span>
+        </div>
+        
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {data.map((p, i) => (
+            <motion.div
+              layout
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: i * 0.05 }}
+              key={p.symbol}
+              className={cn(
+                "h-24 glass-card border flex flex-col items-center justify-center gap-1 transition-all group relative overflow-hidden",
+                p.up 
+                  ? "border-binance-green/20 bg-binance-green/5" 
+                  : "border-binance-red/20 bg-binance-red/5"
+              )}
+            >
+              <div className={cn(
+                "absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity",
+                p.up ? "bg-binance-green" : "bg-binance-red"
+              )} />
+              
+              <span className="text-xs font-bold z-10">{p.symbol}</span>
+              <span className={cn(
+                "text-[14px] font-mono font-bold z-10",
+                p.up ? "text-binance-green" : "text-binance-red"
+              )}>
+                {p.up ? '+' : ''}{p.change}%
+              </span>
+              <span className="text-[9px] text-binance-secondary z-10">${p.price < 1 ? p.price.toFixed(4) : p.price.toFixed(2)}</span>
+              
+              {/* Pulsing indicator */}
+              <div className={cn(
+                "w-1 h-1 rounded-full absolute bottom-2 right-2 animate-pulse",
+                p.up ? "bg-binance-green" : "bg-binance-red"
+              )} />
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* System Note */}
+      <div className="p-4 border border-white/5 bg-white/[0.02] rounded-lg text-center">
+          <p className="text-[10px] text-binance-secondary italic">
+            Visualizing the 24h market sentiment shift through the OpenClaw Data Pipeline. High-frequency updates enabled.
+          </p>
       </div>
     </div>
   )
