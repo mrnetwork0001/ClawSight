@@ -595,6 +595,8 @@ function App() {
     setShowSuggestions(false)
   }
 
+  const handleExplain = async (e) => {
+    if (e) e.preventDefault()
     if (!tradeData.pair || !tradeData.entry || !tradeData.exit) {
       setToast({ message: "Claw Requirement: Pair, Entry, and Exit prices are mandatory." })
       return
