@@ -53,12 +53,34 @@ const Navbar = ({ activeTab, setActiveTab }) => (
 )
 
 const MarketPulse = () => {
-  const [prices, setPrices] = useState([
-    { pair: 'BTCUSDT', price: '67,432.10', change: '+2.4%', up: true },
-    { pair: 'ETHUSDT', price: '3,542.80', change: '-1.2%', up: false },
-    { pair: 'BNBUSDT', price: '584.20', change: '+0.8%', up: true },
-    { pair: 'SOLUSDT', price: '142.15', change: '+5.4%', up: true },
-  ])
+  const [prices, setPrices] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchPrices = async () => {
+    try {
+      const res = await fetch('/api/prices')
+      const data = await res.json()
+      if (!data.error) setPrices(data)
+    } catch (err) {
+      console.error("Pulse Error:", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchPrices()
+    const interval = setInterval(fetchPrices, 30000) // Refresh every 30s
+    return () => clearInterval(interval)
+  }, [])
+
+  if (loading && prices.length === 0) {
+    return (
+      <div className="flex items-center justify-center p-20">
+        <div className="w-10 h-10 border-4 border-binance-primary/10 border-t-binance-primary rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6 pt-6">
@@ -74,8 +96,11 @@ const MarketPulse = () => {
               <p className="text-[10px] text-binance-secondary font-bold uppercase">{p.pair}</p>
               <p className="text-lg font-mono font-bold tracking-tighter">${p.price}</p>
             </div>
-            <span className={cn("text-xs font-bold px-2 py-1 rounded bg-white/5", p.up ? "text-binance-green" : "text-binance-red")}>
-              {p.change}
+            <span className={cn(
+              "text-[10px] font-bold px-2 py-0.5 rounded border",
+              p.up ? "text-binance-green bg-binance-green/10 border-binance-green/20" : "text-binance-red bg-binance-red/10 border-binance-red/20"
+            )}>
+              {p.up ? '+' : ''}{p.change}%
             </span>
           </motion.div>
         ))}
@@ -84,7 +109,7 @@ const MarketPulse = () => {
         <Globe className="w-12 h-12 text-binance-primary/20 mb-4 animate-spin-slow" />
         <h3 className="text-xl font-bold mb-2">Live Heatmap Stream</h3>
         <p className="text-binance-secondary text-sm max-w-sm italic">
-          Fetching cross-exchange order flow data... Connect your Binance Read-Only API to enable high-frequency depth mapping.
+          Fetching cross-exchange order flow data... Connection established with Brussels (bru1) gateway.
         </p>
       </div>
     </div>
