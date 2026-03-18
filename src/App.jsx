@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { 
   Search, Zap, TrendingUp, BarChart2, ShieldAlert, CheckCircle2, 
-  AlertTriangle, ArrowRight, Menu, Clock, Terminal, 
+  AlertTriangle, ArrowRight, Menu, X, Clock, Terminal, 
   Activity, Wind, DollarSign, Globe, Shield 
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -14,37 +14,90 @@ function cn(...inputs) {
 
 // --- Dynamic Components ---
 
-const Navbar = ({ activeTab, setActiveTab }) => (
-  <nav className="fixed top-0 left-0 right-0 h-14 bg-binance-black/80 backdrop-blur-xl border-b border-white/5 z-50 px-4 md:px-8 flex items-center justify-between">
-    <div className="flex items-center gap-8">
-      <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('trade')}>
-        <div className="w-8 h-8 rounded-lg bg-binance-primary flex items-center justify-center">
-          <Zap className="w-5 h-5 text-black fill-black" strokeWidth={3} />
+const Navbar = ({ activeTab, setActiveTab }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const tabs = [
+    { id: 'trade', label: 'Trade Explainer' },
+    { id: 'pulse', label: 'Market Pulse' },
+    { id: 'risk', label: 'Risk Desk' },
+  ];
+
+  return (
+    <>
+      <nav className="fixed top-0 left-0 right-0 h-14 bg-binance-black/80 backdrop-blur-xl border-b border-white/5 z-50 px-4 md:px-8 flex items-center justify-between">
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('trade')}>
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center p-0.5">
+              <img src="/logo.png" alt="ClawSight Logo" className="w-full h-full object-contain" />
+            </div>
+            <span className="text-xl font-bold font-mono tracking-tighter text-binance-primary">ClawSight</span>
+          </div>
+
+          {/* Desktop Links */}
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-binance-secondary">
+            {tabs.map((tab) => (
+              <button 
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn("transition-colors", activeTab === tab.id ? "text-binance-primary" : "hover:text-binance-primary")}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
-        <span className="text-xl font-bold font-mono tracking-tighter text-binance-primary">ClawSight</span>
-      </div>
-      <div className="hidden md:flex items-center gap-6 text-sm font-medium text-binance-secondary">
-        <button 
-          onClick={() => setActiveTab('trade')}
-          className={cn("transition-colors", activeTab === 'trade' ? "text-binance-primary" : "hover:text-binance-primary")}
-        >Trade Explainer</button>
-        <button 
-          onClick={() => setActiveTab('pulse')}
-          className={cn("transition-colors", activeTab === 'pulse' ? "text-binance-primary" : "hover:text-binance-primary")}
-        >Market Pulse</button>
-        <button 
-          onClick={() => setActiveTab('risk')}
-          className={cn("transition-colors", activeTab === 'risk' ? "text-binance-primary" : "hover:text-binance-primary")}
-        >Risk Desk</button>
-      </div>
-    </div>
-    <div className="flex items-center gap-4 text-binance-secondary">
-      <button className="text-[10px] font-bold text-binance-primary px-2 py-0.5 border border-binance-primary/30 rounded bg-binance-primary/5">
-        BINANCE PRO
-      </button>
-    </div>
-  </nav>
-)
+
+        <div className="flex items-center gap-4 text-binance-secondary">
+          <button className="hidden sm:block text-[10px] font-bold text-binance-primary px-2 py-0.5 border border-binance-primary/30 rounded bg-binance-primary/5">
+            BINANCE PRO
+          </button>
+          
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden p-2 text-binance-primary hover:bg-white/5 rounded-lg transition-colors"
+            onClick={() => setIsOpen(!isOpen)}
+          >
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Drawer */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-14 left-0 right-0 bg-binance-black/95 backdrop-blur-2xl border-b border-white/10 z-40 md:hidden p-6 space-y-4"
+          >
+            {tabs.map((tab) => (
+              <button 
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setIsOpen(false);
+                }}
+                className={cn(
+                  "w-full text-left py-3 px-4 rounded-xl font-bold text-lg transition-all",
+                  activeTab === tab.id ? "bg-binance-primary/10 text-binance-primary border border-binance-primary/20" : "text-binance-secondary hover:bg-white/5"
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
+            <div className="pt-4 border-t border-white/5">
+              <button className="w-full text-center py-2 text-xs font-bold text-binance-primary border border-binance-primary/30 rounded-lg bg-binance-primary/5">
+                BINANCE PRO ACCOUNT
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
 
 const MarketPulse = () => {
   const [data, setData] = useState([])
